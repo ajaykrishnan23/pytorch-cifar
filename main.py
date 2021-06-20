@@ -15,10 +15,27 @@ from models import *
 from utils import progress_bar
 
 
+def get_subset(dataset, pct):
+    per_class_values = (len(dataset) * pct) /10
+    m = defaultdict(list)
+    indices = [] 
+    for i, (x,y) in enumerate(dataset):
+        if y in m.keys():
+            if len(m[y]) < per_class_values:
+                m[y].append(i)
+            else:
+                m[y].append(i)
+    for k,v in m.items():
+        indices.extend(v)
+    
+    return indices
+
+
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
+parser.add_argument('--pct', default=1.0, type = float, help = 'percentage of the dataset to be trained with')
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -41,8 +58,15 @@ transform_test = transforms.Compose([
 
 trainset = torchvision.datasets.CIFAR10(
     root='./data', train=True, download=True, transform=transform_train)
+
+
+indices = get_subset(trainset, args.pct)
+trainset = torch.utils.data.Subset(trainset, indices)
+
 trainloader = torch.utils.data.DataLoader(
     trainset, batch_size=128, shuffle=True, num_workers=2)
+
+
 
 testset = torchvision.datasets.CIFAR10(
     root='./data', train=False, download=True, transform=transform_test)
@@ -87,6 +111,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=args.lr,
                       momentum=0.9, weight_decay=5e-4)
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+
 
 
 # Training

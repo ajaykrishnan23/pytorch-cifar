@@ -13,7 +13,7 @@ import argparse
 
 from models import *
 from utils import progress_bar
-
+from collections import defaultdict
 
 def get_subset(dataset, pct):
     per_class_values = (len(dataset) * pct) /10
